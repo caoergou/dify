@@ -2,6 +2,7 @@ import time
 from collections.abc import Mapping
 
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import NodeState
 from dify_graph.graph import Graph
 from dify_graph.graph_engine.graph_state_manager import GraphStateManager
@@ -74,13 +75,17 @@ def _build_llm_node(
 def _build_graph(runtime_state: GraphRuntimeState) -> Graph:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
     graph_init_params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from="account",
-        invoke_from="debugger",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": "account",
+                "invoke_from": "debugger",
+            }
+        },
         call_depth=0,
     )
 

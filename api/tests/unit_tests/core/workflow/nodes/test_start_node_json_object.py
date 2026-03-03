@@ -5,6 +5,7 @@ import pytest
 from pydantic import ValidationError as PydanticValidationError
 
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.nodes.start.entities import StartNodeData
 from dify_graph.nodes.start.start_node import StartNode
 from dify_graph.runtime import GraphRuntimeState, VariablePool
@@ -33,13 +34,17 @@ def make_start_node(user_inputs, variables):
         id="start",
         config=config,
         graph_init_params=GraphInitParams(
-            tenant_id="tenant",
-            app_id="app",
             workflow_id="wf",
             graph_config={},
-            user_id="u",
-            user_from="account",
-            invoke_from="debugger",
+            run_context={
+                DIFY_RUN_CONTEXT_KEY: {
+                    "tenant_id": "tenant",
+                    "app_id": "app",
+                    "user_id": "u",
+                    "user_from": "account",
+                    "invoke_from": "debugger",
+                }
+            },
             call_depth=0,
         ),
         graph_runtime_state=graph_runtime_state,

@@ -5,12 +5,13 @@ from urllib.parse import urlencode
 import pytest
 
 from configs import dify_config
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.helper.ssrf_proxy import ssrf_proxy
 from core.tools.tool_file_manager import ToolFileManager
 from core.workflow.node_factory import DifyNodeFactory
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.file.file_manager import file_manager
 from dify_graph.graph import Graph
 from dify_graph.nodes.http_request import HttpRequestNode, HttpRequestNodeConfig
@@ -42,13 +43,17 @@ def init_http_node(config: dict):
     }
 
     init_params = GraphInitParams(
-        tenant_id="1",
-        app_id="1",
         workflow_id="1",
         graph_config=graph_config,
-        user_id="1",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "1",
+                "app_id": "1",
+                "user_id": "1",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
 
@@ -686,13 +691,17 @@ def test_nested_object_variable_selector(setup_http_mock):
     }
 
     init_params = GraphInitParams(
-        tenant_id="1",
-        app_id="1",
         workflow_id="1",
         graph_config=graph_config,
-        user_id="1",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "1",
+                "app_id": "1",
+                "user_id": "1",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
 

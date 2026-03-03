@@ -11,6 +11,7 @@ import pytest
 from core.tools.entities.tool_entities import ToolInvokeMessage
 from core.tools.utils.message_transformer import ToolFileMessageTransformer
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.file import File, FileTransferMethod, FileType
 from dify_graph.model_runtime.entities.llm_entities import LLMUsage
 from dify_graph.node_events import StreamChunkEvent, StreamCompletedEvent
@@ -55,13 +56,17 @@ def tool_node(monkeypatch) -> ToolNode:
     }
 
     init_params = GraphInitParams(
-        tenant_id="tenant-id",
-        app_id="app-id",
         workflow_id="workflow-id",
         graph_config=graph_config,
-        user_id="user-id",
-        user_from="account",
-        invoke_from="debugger",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant-id",
+                "app_id": "app-id",
+                "user_id": "user-id",
+                "user_from": "account",
+                "invoke_from": "debugger",
+            }
+        },
         call_depth=0,
     )
 

@@ -5,10 +5,10 @@ from dify_graph.graph_engine.entities.graph import Graph
 from dify_graph.graph_engine.entities.graph_init_params import GraphInitParams
 from dify_graph.graph_engine.entities.graph_runtime_state import GraphRuntimeState
 
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import NodeType, WorkflowNodeExecutionStatus
 from dify_graph.nodes.list_operator.node import ListOperatorNode
 from dify_graph.variables import ArrayNumberSegment, ArrayStringSegment
-from models.workflow import WorkflowType
 
 
 class TestListOperatorNode:
@@ -31,14 +31,17 @@ class TestListOperatorNode:
     def graph_init_params(self):
         """Create GraphInitParams fixture."""
         return GraphInitParams(
-            tenant_id="test",
-            app_id="test",
-            workflow_type=WorkflowType.WORKFLOW,
             workflow_id="test",
             graph_config={},
-            user_id="test",
-            user_from="test",
-            invoke_from="test",
+            run_context={
+                DIFY_RUN_CONTEXT_KEY: {
+                    "tenant_id": "test",
+                    "app_id": "test",
+                    "user_id": "test",
+                    "user_from": "test",
+                    "invoke_from": "test",
+                }
+            },
             call_depth=0,
         )
 

@@ -2,11 +2,12 @@ import time
 import uuid
 from unittest.mock import MagicMock
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.tools.utils.configuration import ToolParameterConfigurationManager
 from core.workflow.node_factory import DifyNodeFactory
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.graph import Graph
 from dify_graph.node_events import StreamCompletedEvent
 from dify_graph.nodes.tool.tool_node import ToolNode
@@ -27,13 +28,17 @@ def init_tool_node(config: dict):
     }
 
     init_params = GraphInitParams(
-        tenant_id="1",
-        app_id="1",
         workflow_id="1",
         graph_config=graph_config,
-        user_id="1",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "1",
+                "app_id": "1",
+                "user_id": "1",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
 

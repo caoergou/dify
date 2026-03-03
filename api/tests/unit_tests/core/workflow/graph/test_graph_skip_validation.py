@@ -4,10 +4,10 @@ from typing import Any
 
 import pytest
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.workflow.node_factory import DifyNodeFactory
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.graph import Graph
 from dify_graph.graph.validation import GraphValidationError
 from dify_graph.nodes import NodeType
@@ -54,13 +54,17 @@ def _build_loop_graph(node_id: str) -> dict[str, Any]:
 
 def _make_factory(graph_config: dict[str, Any]) -> DifyNodeFactory:
     graph_init_params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
     graph_runtime_state = GraphRuntimeState(

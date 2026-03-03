@@ -12,11 +12,12 @@ import time
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.model_manager import ModelInstance
 from core.workflow.node_factory import DifyNodeFactory
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import NodeType, UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import NodeType, WorkflowNodeExecutionStatus
 from dify_graph.graph import Graph
 from dify_graph.graph_engine import GraphEngine, GraphEngineConfig
 from dify_graph.graph_engine.command_channels import InMemoryChannel
@@ -87,20 +88,24 @@ def test_parallel_streaming_workflow():
 
     # Create graph initialization parameters
     init_params = GraphInitParams(
-        tenant_id="test_tenant",
-        app_id="test_app",
         workflow_id="test_workflow",
         graph_config=graph_config,
-        user_id="test_user",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.WEB_APP,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "test_tenant",
+                "app_id": "test_app",
+                "user_id": "test_user",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.WEB_APP,
+            }
+        },
         call_depth=0,
     )
 
     # Create variable pool with system variables
     system_variables = SystemVariable(
-        user_id=init_params.user_id,
-        app_id=init_params.app_id,
+        user_id="test_user",
+        app_id="test_app",
         workflow_id=init_params.workflow_id,
         files=[],
         query="Tell me about yourself",  # User query

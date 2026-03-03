@@ -4,6 +4,8 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any
 
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+
 API_DIR = str(Path(__file__).resolve().parents[5])
 if API_DIR not in sys.path:
     sys.path.insert(0, API_DIR)
@@ -143,13 +145,17 @@ def _build_graph_config(*, pause_on: str | None) -> dict[str, object]:
 def _build_graph(runtime_state: GraphRuntimeState, *, pause_on: str | None) -> Graph:
     graph_config = _build_graph_config(pause_on=pause_on)
     params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from="account",
-        invoke_from="service-api",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": "account",
+                "invoke_from": "service-api",
+            }
+        },
         call_depth=0,
     )
 

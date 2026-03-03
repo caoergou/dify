@@ -4,11 +4,12 @@ from typing import Any
 import httpx
 import pytest
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.helper.ssrf_proxy import ssrf_proxy
 from core.tools.tool_file_manager import ToolFileManager
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.file.file_manager import file_manager
 from dify_graph.nodes.http_request import HTTP_REQUEST_CONFIG_FILTER_KEY, HttpRequestNode, HttpRequestNodeConfig
 from dify_graph.nodes.http_request.entities import HttpRequestNodeTimeout, Response
@@ -99,13 +100,17 @@ def _build_http_node(
         "edges": [],
     }
     graph_init_params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
     graph_runtime_state = GraphRuntimeState(

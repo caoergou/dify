@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.graph import Graph
 from dify_graph.graph_events import (
     GraphRunPausedEvent,
@@ -48,13 +49,17 @@ def _build_branching_graph(
 ) -> tuple[Graph, GraphRuntimeState]:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
     graph_init_params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from="account",
-        invoke_from="debugger",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": "account",
+                "invoke_from": "debugger",
+            }
+        },
         call_depth=0,
     )
 

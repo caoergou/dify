@@ -13,6 +13,7 @@ from core.app.workflow.layers import PersistenceWorkflowInfo, WorkflowPersistenc
 from core.repositories.sqlalchemy_workflow_execution_repository import SQLAlchemyWorkflowExecutionRepository
 from core.repositories.sqlalchemy_workflow_node_execution_repository import SQLAlchemyWorkflowNodeExecutionRepository
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import WorkflowType
 from dify_graph.graph import Graph
 from dify_graph.graph_engine.command_channels.in_memory_channel import InMemoryChannel
@@ -88,13 +89,17 @@ def _build_graph(
 ) -> Graph:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
     params = GraphInitParams(
-        tenant_id=tenant_id,
-        app_id=app_id,
         workflow_id=workflow_id,
         graph_config=graph_config,
-        user_id=user_id,
-        user_from="account",
-        invoke_from="debugger",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": tenant_id,
+                "app_id": app_id,
+                "user_id": user_id,
+                "user_from": "account",
+                "invoke_from": "debugger",
+            }
+        },
         call_depth=0,
     )
 

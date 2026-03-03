@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.entities.workflow_start_reason import WorkflowStartReason
 from dify_graph.graph import Graph
 from dify_graph.graph_engine.command_channels.in_memory_channel import InMemoryChannel
@@ -80,13 +81,17 @@ def _build_human_input_graph(
 ) -> Graph:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
     params = GraphInitParams(
-        tenant_id="tenant",
-        app_id="app",
         workflow_id="workflow",
         graph_config=graph_config,
-        user_id="user",
-        user_from="account",
-        invoke_from="service-api",
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "tenant",
+                "app_id": "app",
+                "user_id": "user",
+                "user_from": "account",
+                "invoke_from": "service-api",
+            }
+        },
         call_depth=0,
     )
 

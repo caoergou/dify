@@ -4,9 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import SystemVariableKey, UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import SystemVariableKey, WorkflowNodeExecutionStatus
 from dify_graph.nodes.knowledge_index.entities import KnowledgeIndexNodeData
 from dify_graph.nodes.knowledge_index.exc import KnowledgeIndexNodeError
 from dify_graph.nodes.knowledge_index.knowledge_index_node import KnowledgeIndexNode
@@ -21,13 +22,17 @@ from dify_graph.variables.segments import StringSegment
 def mock_graph_init_params():
     """Create mock GraphInitParams."""
     return GraphInitParams(
-        tenant_id=str(uuid.uuid4()),
-        app_id=str(uuid.uuid4()),
         workflow_id=str(uuid.uuid4()),
         graph_config={},
-        user_id=str(uuid.uuid4()),
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": str(uuid.uuid4()),
+                "app_id": str(uuid.uuid4()),
+                "user_id": str(uuid.uuid4()),
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
 

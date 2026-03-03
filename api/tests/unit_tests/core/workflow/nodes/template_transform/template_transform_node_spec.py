@@ -4,13 +4,13 @@ import pytest
 
 from core.app.entities.app_invoke_entities import InvokeFrom
 from dify_graph.entities import GraphInitParams
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import ErrorStrategy, NodeType, WorkflowNodeExecutionStatus
 from dify_graph.graph import Graph
 from dify_graph.nodes.template_transform.template_renderer import TemplateRenderError
 from dify_graph.nodes.template_transform.template_transform_node import TemplateTransformNode
 from dify_graph.runtime import GraphRuntimeState
 from models.enums import UserFrom
-from models.workflow import WorkflowType
 
 
 class TestTemplateTransformNode:
@@ -33,14 +33,17 @@ class TestTemplateTransformNode:
     def graph_init_params(self):
         """Create a mock GraphInitParams."""
         return GraphInitParams(
-            tenant_id="test_tenant",
-            app_id="test_app",
-            workflow_type=WorkflowType.WORKFLOW,
             workflow_id="test_workflow",
             graph_config={},
-            user_id="test_user",
-            user_from=UserFrom.ACCOUNT,
-            invoke_from=InvokeFrom.DEBUGGER,
+            run_context={
+                DIFY_RUN_CONTEXT_KEY: {
+                    "tenant_id": "test_tenant",
+                    "app_id": "test_app",
+                    "user_id": "test_user",
+                    "user_from": UserFrom.ACCOUNT,
+                    "invoke_from": InvokeFrom.DEBUGGER,
+                }
+            },
             call_depth=0,
         )
 

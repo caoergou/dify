@@ -4,17 +4,18 @@ import uuid
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.llm_generator.output_parser.structured_output import _parse_structured_output
 from core.model_manager import ModelInstance
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.node_events import StreamCompletedEvent
 from dify_graph.nodes.llm.node import LLMNode
 from dify_graph.nodes.llm.protocols import CredentialsProvider, ModelFactory
 from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
 from extensions.ext_database import db
+from tests.workflow_test_utils import build_test_run_context
 
 """FOR MOCK FIXTURES, DO NOT REMOVE"""
 
@@ -38,13 +39,15 @@ def init_llm_node(config: dict) -> LLMNode:
     user_id = "9d2074fc-6f86-45a9-b09d-6ecc63b9056e"
 
     init_params = GraphInitParams(
-        tenant_id=tenant_id,
-        app_id=app_id,
         workflow_id=workflow_id,
         graph_config=graph_config,
-        user_id=user_id,
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context=build_test_run_context(
+            tenant_id=tenant_id,
+            app_id=app_id,
+            user_id=user_id,
+            user_from=UserFrom.ACCOUNT,
+            invoke_from=InvokeFrom.DEBUGGER,
+        ),
         call_depth=0,
     )
 

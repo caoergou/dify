@@ -3,10 +3,11 @@ import time
 import uuid
 from unittest.mock import MagicMock
 
-from core.app.entities.app_invoke_entities import InvokeFrom
+from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.model_manager import ModelInstance
 from dify_graph.entities import GraphInitParams
-from dify_graph.enums import UserFrom, WorkflowNodeExecutionStatus
+from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
+from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.model_runtime.entities import AssistantPromptMessage, UserPromptMessage
 from dify_graph.nodes.llm.protocols import CredentialsProvider, ModelFactory
 from dify_graph.nodes.parameter_extractor.parameter_extractor_node import ParameterExtractorNode
@@ -44,13 +45,17 @@ def init_parameter_extractor_node(config: dict, memory=None):
     }
 
     init_params = GraphInitParams(
-        tenant_id="1",
-        app_id="1",
         workflow_id="1",
         graph_config=graph_config,
-        user_id="1",
-        user_from=UserFrom.ACCOUNT,
-        invoke_from=InvokeFrom.DEBUGGER,
+        run_context={
+            DIFY_RUN_CONTEXT_KEY: {
+                "tenant_id": "1",
+                "app_id": "1",
+                "user_id": "1",
+                "user_from": UserFrom.ACCOUNT,
+                "invoke_from": InvokeFrom.DEBUGGER,
+            }
+        },
         call_depth=0,
     )
 
