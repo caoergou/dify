@@ -139,9 +139,7 @@ class AppMessageExportService:
         storage.save(self._filename, data)
         logger.info("export_app_messages: uploaded %d bytes to cloud key=%s", len(data), self._filename)
 
-    def _iter_records_with_stats(
-        self, stats: AppMessageExportStats
-    ) -> Generator[AppMessageExportRecord, None, None]:
+    def _iter_records_with_stats(self, stats: AppMessageExportStats) -> Generator[AppMessageExportRecord, None, None]:
         for record in self.iter_records():
             self._update_stats(stats, record)
             yield record
@@ -233,9 +231,7 @@ class AppMessageExportService:
         return result
 
     @staticmethod
-    def _build_record(
-        row: Any, feedbacks_map: dict[str, list[AppMessageExportFeedback]]
-    ) -> AppMessageExportRecord:
+    def _build_record(row: Any, feedbacks_map: dict[str, list[AppMessageExportFeedback]]) -> AppMessageExportRecord:
         retriever_resources: list[Any] = []
         if row.message_metadata:
             try:
