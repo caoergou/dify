@@ -5,8 +5,6 @@ from unittest.mock import Mock
 import pytest
 
 from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
-from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.model_runtime.entities.llm_entities import LLMUsage
 from dify_graph.nodes.knowledge_retrieval.entities import (
@@ -21,23 +19,20 @@ from dify_graph.repositories.rag_retrieval_protocol import RAGRetrievalProtocol,
 from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
 from dify_graph.variables import StringSegment
+from tests.workflow_test_utils import build_test_graph_init_params
 
 
 @pytest.fixture
 def mock_graph_init_params():
     """Create mock GraphInitParams."""
-    return GraphInitParams(
+    return build_test_graph_init_params(
         workflow_id=str(uuid.uuid4()),
         graph_config={},
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": str(uuid.uuid4()),
-                "app_id": str(uuid.uuid4()),
-                "user_id": str(uuid.uuid4()),
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id=str(uuid.uuid4()),
+        app_id=str(uuid.uuid4()),
+        user_id=str(uuid.uuid4()),
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 

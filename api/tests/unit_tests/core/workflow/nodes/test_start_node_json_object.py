@@ -4,13 +4,12 @@ import time
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.nodes.start.entities import StartNodeData
 from dify_graph.nodes.start.start_node import StartNode
 from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
 from dify_graph.variables.input_entities import VariableEntity, VariableEntityType
+from tests.workflow_test_utils import build_test_graph_init_params
 
 
 def make_start_node(user_inputs, variables):
@@ -33,18 +32,14 @@ def make_start_node(user_inputs, variables):
     return StartNode(
         id="start",
         config=config,
-        graph_init_params=GraphInitParams(
+        graph_init_params=build_test_graph_init_params(
             workflow_id="wf",
             graph_config={},
-            run_context={
-                DIFY_RUN_CONTEXT_KEY: {
-                    "tenant_id": "tenant",
-                    "app_id": "app",
-                    "user_id": "u",
-                    "user_from": "account",
-                    "invoke_from": "debugger",
-                }
-            },
+            tenant_id="tenant",
+            app_id="app",
+            user_id="u",
+            user_from="account",
+            invoke_from="debugger",
             call_depth=0,
         ),
         graph_runtime_state=graph_runtime_state,

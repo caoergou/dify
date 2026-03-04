@@ -3,7 +3,6 @@ from collections.abc import Mapping
 import pytest
 
 from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
-from core.app.entities.app_invoke_entities import InvokeFrom as LegacyInvokeFrom
 from dify_graph.entities import GraphInitParams
 from dify_graph.enums import NodeType
 from dify_graph.nodes.base.entities import BaseNodeData
@@ -59,12 +58,12 @@ def test_node_hydrates_data_during_initialization():
     assert dify_ctx.invoke_from == "debugger"
 
 
-def test_node_normalizes_legacy_invoke_from_enum():
+def test_node_accepts_invoke_from_enum():
     graph_config: dict[str, object] = {}
     init_params = build_test_graph_init_params(
         graph_config=graph_config,
         user_from=UserFrom.ACCOUNT,
-        invoke_from=LegacyInvokeFrom.DEBUGGER,
+        invoke_from=InvokeFrom.DEBUGGER,
     )
     runtime_state = GraphRuntimeState(
         variable_pool=VariablePool(system_variables=SystemVariable(user_id="user", files=[]), user_inputs={}),

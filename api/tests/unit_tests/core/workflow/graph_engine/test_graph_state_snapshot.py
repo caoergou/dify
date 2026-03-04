@@ -2,7 +2,6 @@ import time
 from collections.abc import Mapping
 
 from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import NodeState
 from dify_graph.graph import Graph
 from dify_graph.graph_engine.graph_state_manager import GraphStateManager
@@ -22,6 +21,7 @@ from dify_graph.nodes.start.entities import StartNodeData
 from dify_graph.nodes.start.start_node import StartNode
 from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
+from tests.workflow_test_utils import build_test_graph_init_params
 
 from .test_mock_config import MockConfig
 from .test_mock_nodes import MockLLMNode
@@ -74,18 +74,14 @@ def _build_llm_node(
 
 def _build_graph(runtime_state: GraphRuntimeState) -> Graph:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
-    graph_init_params = GraphInitParams(
+    graph_init_params = build_test_graph_init_params(
         workflow_id="workflow",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "tenant",
-                "app_id": "app",
-                "user_id": "user",
-                "user_from": "account",
-                "invoke_from": "debugger",
-            }
-        },
+        tenant_id="tenant",
+        app_id="app",
+        user_id="user",
+        user_from="account",
+        invoke_from="debugger",
         call_depth=0,
     )
 

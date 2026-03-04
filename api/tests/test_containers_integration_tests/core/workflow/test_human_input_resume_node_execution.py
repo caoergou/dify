@@ -12,8 +12,6 @@ from core.app.entities.app_invoke_entities import InvokeFrom, WorkflowAppGenerat
 from core.app.workflow.layers import PersistenceWorkflowInfo, WorkflowPersistenceLayer
 from core.repositories.sqlalchemy_workflow_execution_repository import SQLAlchemyWorkflowExecutionRepository
 from core.repositories.sqlalchemy_workflow_node_execution_repository import SQLAlchemyWorkflowNodeExecutionRepository
-from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import WorkflowType
 from dify_graph.graph import Graph
 from dify_graph.graph_engine.command_channels.in_memory_channel import InMemoryChannel
@@ -34,6 +32,7 @@ from models.account import Tenant, TenantAccountJoin, TenantAccountRole
 from models.enums import CreatorUserRole, WorkflowRunTriggeredFrom
 from models.model import App, AppMode, IconType
 from models.workflow import Workflow, WorkflowNodeExecutionModel, WorkflowNodeExecutionTriggeredFrom, WorkflowRun
+from tests.workflow_test_utils import build_test_graph_init_params
 
 
 def _mock_form_repository_without_submission() -> HumanInputFormRepository:
@@ -88,18 +87,14 @@ def _build_graph(
     form_repository: HumanInputFormRepository,
 ) -> Graph:
     graph_config: dict[str, object] = {"nodes": [], "edges": []}
-    params = GraphInitParams(
+    params = build_test_graph_init_params(
         workflow_id=workflow_id,
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": tenant_id,
-                "app_id": app_id,
-                "user_id": user_id,
-                "user_from": "account",
-                "invoke_from": "debugger",
-            }
-        },
+        tenant_id=tenant_id,
+        app_id=app_id,
+        user_id=user_id,
+        user_from="account",
+        invoke_from="debugger",
         call_depth=0,
     )
 

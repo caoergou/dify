@@ -15,8 +15,6 @@ from uuid import uuid4
 from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.model_manager import ModelInstance
 from core.workflow.node_factory import DifyNodeFactory
-from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import NodeType, WorkflowNodeExecutionStatus
 from dify_graph.graph import Graph
 from dify_graph.graph_engine import GraphEngine, GraphEngineConfig
@@ -31,6 +29,7 @@ from dify_graph.node_events import NodeRunResult, StreamCompletedEvent
 from dify_graph.nodes.llm.node import LLMNode
 from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
+from tests.workflow_test_utils import build_test_graph_init_params
 
 from .test_table_runner import TableTestRunner
 
@@ -87,18 +86,14 @@ def test_parallel_streaming_workflow():
     graph_config = workflow_config.get("graph", {})
 
     # Create graph initialization parameters
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="test_workflow",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "test_tenant",
-                "app_id": "test_app",
-                "user_id": "test_user",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.WEB_APP,
-            }
-        },
+        tenant_id="test_tenant",
+        app_id="test_app",
+        user_id="test_user",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.WEB_APP,
         call_depth=0,
     )
 

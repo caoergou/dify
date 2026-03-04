@@ -6,7 +6,6 @@ import pytest
 
 from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.workflow.node_factory import DifyNodeFactory
-from dify_graph.entities import GraphInitParams
 from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.file import File, FileTransferMethod, FileType
@@ -18,23 +17,20 @@ from dify_graph.system_variable import SystemVariable
 from dify_graph.utils.condition.entities import Condition, SubCondition, SubVariableCondition
 from dify_graph.variables import ArrayFileSegment
 from extensions.ext_database import db
+from tests.workflow_test_utils import build_test_graph_init_params
 
 
 def test_execute_if_else_result_true():
     graph_config = {"edges": [], "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}]}
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 
@@ -133,18 +129,14 @@ def test_execute_if_else_result_false():
     # Create a simple graph for IfElse node testing
     graph_config = {"edges": [], "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}]}
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 
@@ -311,18 +303,14 @@ def test_execute_if_else_boolean_conditions(condition: Condition):
     """Test IfElseNode with boolean conditions using various operators"""
     graph_config = {"edges": [], "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}]}
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 
@@ -370,18 +358,14 @@ def test_execute_if_else_boolean_false_conditions():
     """Test IfElseNode with boolean conditions that should evaluate to false"""
     graph_config = {"edges": [], "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}]}
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 
@@ -443,18 +427,14 @@ def test_execute_if_else_boolean_cases_structure():
     """Test IfElseNode with boolean conditions using the new cases structure"""
     graph_config = {"edges": [], "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}]}
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 

@@ -5,8 +5,6 @@ from unittest.mock import MagicMock
 
 from core.app.entities.app_invoke_entities import InvokeFrom, UserFrom
 from core.model_manager import ModelInstance
-from dify_graph.entities import GraphInitParams
-from dify_graph.entities.graph_init_params import DIFY_RUN_CONTEXT_KEY
 from dify_graph.enums import WorkflowNodeExecutionStatus
 from dify_graph.model_runtime.entities import AssistantPromptMessage, UserPromptMessage
 from dify_graph.nodes.llm.protocols import CredentialsProvider, ModelFactory
@@ -15,6 +13,7 @@ from dify_graph.runtime import GraphRuntimeState, VariablePool
 from dify_graph.system_variable import SystemVariable
 from extensions.ext_database import db
 from tests.integration_tests.workflow.nodes.__mock.model import get_mocked_fetch_model_instance
+from tests.workflow_test_utils import build_test_graph_init_params
 
 """FOR MOCK FIXTURES, DO NOT REMOVE"""
 from tests.integration_tests.model_runtime.__mock.plugin_daemon import setup_model_mock
@@ -44,18 +43,14 @@ def init_parameter_extractor_node(config: dict, memory=None):
         "nodes": [{"data": {"type": "start", "title": "Start"}, "id": "start"}, config],
     }
 
-    init_params = GraphInitParams(
+    init_params = build_test_graph_init_params(
         workflow_id="1",
         graph_config=graph_config,
-        run_context={
-            DIFY_RUN_CONTEXT_KEY: {
-                "tenant_id": "1",
-                "app_id": "1",
-                "user_id": "1",
-                "user_from": UserFrom.ACCOUNT,
-                "invoke_from": InvokeFrom.DEBUGGER,
-            }
-        },
+        tenant_id="1",
+        app_id="1",
+        user_id="1",
+        user_from=UserFrom.ACCOUNT,
+        invoke_from=InvokeFrom.DEBUGGER,
         call_depth=0,
     )
 
