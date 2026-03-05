@@ -133,7 +133,7 @@ class ModelInstance:
         model_parameters: dict | None = None,
         tools: Sequence[PromptMessageTool] | None = None,
         stop: list[str] | None = None,
-        stream: bool,
+        stream: bool = True,
         user: str | None = None,
         callbacks: list[Callback] | None = None,
     ) -> Union[LLMResult, Generator]: ...
