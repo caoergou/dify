@@ -133,9 +133,9 @@ class ModelInstance:
         model_parameters: dict | None = None,
         tools: Sequence[PromptMessageTool] | None = None,
         stop: list[str] | None = None,
-        stream: bool,
-        user: str | None,
-        callbacks: list[Callback] | None,
+        stream: bool = True,
+        user: str | None = None,
+        callbacks: list[Callback] | None = None,
     ) -> Union[LLMResult, Generator]: ...
 
     def invoke_llm(
