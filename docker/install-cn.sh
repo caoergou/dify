@@ -636,7 +636,9 @@ ask() {
     local prompt="$1"
     local default="$2"
     local result
-    read -p "$prompt [$default] " result < /dev/tty
+    # 直接输出到终端，避免缓冲
+    echo -n "$prompt [$default] " > /dev/tty
+    read result < /dev/tty
     echo "${result:-$default}"
 }
 
@@ -646,9 +648,9 @@ ask_choice() {
     shift 2
     local options=("$@")
 
-    echo "$prompt"
+    echo "$prompt" > /dev/tty
     for i in "${!options[@]}"; do
-        echo "  [$((i+1))] ${options[$i]}"
+        echo "  [$((i+1))] ${options[$i]}" > /dev/tty
     done
 
     local result
@@ -668,7 +670,9 @@ ask_yes_no() {
     local default_display="$([ "$default" = true ] && echo "Y/n" || echo "y/N")"
 
     local result
-    read -p "$prompt [$default_display] " result < /dev/tty
+    # 直接输出到终端，避免缓冲
+    echo -n "$prompt [$default_display] " > /dev/tty
+    read result < /dev/tty
     result="${result:-$([ "$default" = true ] && echo "y" || echo "n")}"
 
     case "$result" in
