@@ -343,14 +343,40 @@ print_success() {
 }
 
 # Ask functions
+# For optional fields with default value - shows [default] and accepts empty input
 ask() {
     local prompt="$1"
     local default="$2"
     local result
     # Output directly to terminal to avoid buffering
-    echo -n "$prompt [$default] " > /dev/tty
+    echo -n "$prompt [$default]: " > /dev/tty
     read result < /dev/tty
     echo "${result:-$default}"
+}
+
+# For required fields - shows * marker, rejects empty input, provides example
+ask_required() {
+    local prompt="$1"
+    local example="$2"
+    local result
+
+    while true; do
+        echo ""
+        echo -n "* $prompt" > /dev/tty
+        if [ -n "$example" ]; then
+            echo "" > /dev/tty
+            echo "  Example: $example" > /dev/tty
+        fi
+        echo -n "  → " > /dev/tty
+        read result < /dev/tty
+
+        if [ -n "$result" ]; then
+            echo "$result"
+            return
+        fi
+
+        print_warn "This field is required. Please enter a value."
+    done
 }
 
 ask_choice() {
@@ -711,18 +737,65 @@ interactive_config() {
 
     print_section "Deployment Type"
 
-    DEPLOY_CHOICE=$(ask_choice "Deployment type" "1" \
-        "Private / Local ⭐ Recommended (localhost/IP, no SSL)" \
-        "Public / Production (with domain, optional SSL)")
+    echo "Who will access this Dify instance?"
+    echo ""
+    echo "  [1] Only this machine (localhost) - for local development/testing"
+    echo "      → Access: http://localhost or http://127.0.0.1"
+    echo ""
+    echo "  [2] Other devices in my network / Cloud server with IP or domain"
+    echo "      → Access: http://your-ip:port or http://your-domain:port"
+    echo "      → Example: http://192.168.1.100:8080 or http://dify.example.com:8080"
+    echo "      → Only ONE port needs to be exposed (all services share this port)"
+    echo ""
+    echo "  [3] Public website with SSL (HTTPS) - for production"
+    echo "      → Access: https://your-domain.com (standard ports 80/443)"
+    echo ""
 
-    if [ "$DEPLOY_CHOICE" = "2" ]; then
+    DEPLOY_CHOICE=$(ask_choice "Select deployment type" "2" \
+        "Local development only (localhost)" \
+        "Network/IP/Domain access (HTTP, single port)" \
+        "Public production (HTTPS with SSL)")
+
+    if [ "$DEPLOY_CHOICE" = "1" ]; then
+        # Local development only
+        DEPLOY_TYPE="private"
+        print_section "Network Configuration"
+        echo "Local development mode - Dify will only be accessible from this machine."
+        echo ""
+
+        DOMAIN="localhost"
+        HTTP_PORT=$(ask "HTTP port" "80")
+        NGINX_SERVER_NAME="$DOMAIN"
+        NGINX_HTTPS_ENABLED=false
+
+        print_ok "Configured for local access at http://localhost:$HTTP_PORT"
+
+    elif [ "$DEPLOY_CHOICE" = "2" ]; then
+        # Network/IP/Domain access with single port
+        DEPLOY_TYPE="private"
+        print_section "Network Configuration"
+        echo "Network access mode - Dify will be accessible via IP or domain with one port."
+        echo ""
+        echo "💡 Tip: Only ONE port needs to be exposed in your firewall/security group."
+        echo "   All services (API, Web, Files) share this single port through Nginx."
+        echo ""
+
+        DOMAIN=$(ask_required "IP address or domain name" "192.168.1.100 or dify.example.com")
+
+        HTTP_PORT=$(ask "HTTP port to expose" "8080")
+        NGINX_SERVER_NAME="$DOMAIN"
+        NGINX_HTTPS_ENABLED=false
+
+        echo ""
+        print_ok "Configured for network access at http://$DOMAIN:$HTTP_PORT"
+        echo "   Make sure to open port $HTTP_PORT in your firewall/security group."
+
+    else
+        # Public production with SSL
         DEPLOY_TYPE="public"
         print_section "Domain and Network"
 
-        DOMAIN=$(ask "Domain name (e.g., dify.example.com)" "")
-        while [ -z "$DOMAIN" ]; do
-            DOMAIN=$(ask "Domain name (required for public deployment)" "")
-        done
+        DOMAIN=$(ask_required "Domain name" "dify.example.com")
         NGINX_SERVER_NAME="$DOMAIN"
 
         HTTP_PORT=$(ask "HTTP port" "80")
@@ -731,9 +804,9 @@ interactive_config() {
         print_section "SSL Certificate"
 
         SSL_CHOICE=$(ask_choice "SSL Certificate option" "1" \
-            "No SSL (use HTTP only) ⭐ Recommended for testing" \
-            "Enable SSL (with Let's Encrypt / Certbot)" \
-            "Enable SSL (custom certificates)")
+            "No SSL (use HTTP only) - NOT recommended for production" \
+            "Enable SSL with Let's Encrypt (auto-managed)" \
+            "Enable SSL with custom certificates")
 
         case $SSL_CHOICE in
             1)
@@ -752,14 +825,6 @@ interactive_config() {
                 echo "  - Private key: ./nginx/ssl/dify.key"
                 ;;
         esac
-    else
-        DEPLOY_TYPE="private"
-        print_section "Network Configuration"
-
-        DOMAIN=$(ask "IP address or hostname" "localhost")
-        HTTP_PORT=$(ask "HTTP port" "80")
-        NGINX_SERVER_NAME="$DOMAIN"
-        NGINX_HTTPS_ENABLED=false
     fi
 
     print_section "Database Selection"
@@ -910,7 +975,9 @@ create_env_file() {
     update_env "CONSOLE_API_URL" "$base_url" ".env"
     update_env "CONSOLE_WEB_URL" "$base_url" ".env"
     update_env "SERVICE_API_URL" "$base_url" ".env"
+    update_env "APP_API_URL" "$base_url" ".env"
     update_env "APP_WEB_URL" "$base_url" ".env"
+    update_env "TRIGGER_URL" "$base_url" ".env"
     update_env "FILES_URL" "$files_url" ".env"
     update_env "INTERNAL_FILES_URL" "http://api:5001" ".env"
 
@@ -991,17 +1058,12 @@ check_service_health() {
 
 # Check if API is responding
 check_api_health() {
-    local max_attempts=30
+    local max_attempts=60
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
-        # Try to connect to the API health endpoint
-        if curl -sf "http://localhost:${HTTP_PORT}/health" >/dev/null 2>&1; then
-            return 0
-        fi
-
-        # Also try direct API port if nginx isn't ready
-        if curl -sf "http://localhost:5001/health" >/dev/null 2>&1; then
+        # Directly check API health inside container, no dependency on nginx or port mapping
+        if docker compose exec -T api curl -sf http://localhost:5001/health >/dev/null 2>&1; then
             return 0
         fi
 
@@ -1100,8 +1162,12 @@ start_services() {
         print_ok "API is healthy and responding"
     else
         print_warn "API health check timed out"
-        echo "  Services may still be initializing. Check logs with: docker compose logs -f api"
-        echo "  If issues persist, verify your configuration in .env file"
+        echo "  Showing last 100 lines of API logs for troubleshooting:"
+        echo "================================================================"
+        docker compose logs --tail 100 api
+        echo "================================================================"
+        echo "  Services may still be initializing. Check full logs with: docker compose logs -f api"
+        echo "  Common issues: database connection failures, missing configuration, insufficient memory"
     fi
     echo ""
 }

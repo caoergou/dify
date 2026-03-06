@@ -632,14 +632,40 @@ print_success() {
 }
 
 # 询问函数
+# 用于可选字段，有默认值 - 显示 [默认值] 并接受空输入
 ask() {
     local prompt="$1"
     local default="$2"
     local result
     # 直接输出到终端，避免缓冲
-    echo -n "$prompt [$default] " > /dev/tty
+    echo -n "$prompt [$default]: " > /dev/tty
     read result < /dev/tty
     echo "${result:-$default}"
+}
+
+# 用于必填字段 - 显示 * 标记，拒绝空输入，提供示例
+ask_required() {
+    local prompt="$1"
+    local example="$2"
+    local result
+
+    while true; do
+        echo "" > /dev/tty
+        echo -n "* $prompt" > /dev/tty
+        if [ -n "$example" ]; then
+            echo "" > /dev/tty
+            echo "  示例: $example" > /dev/tty
+        fi
+        echo -n "  → " > /dev/tty
+        read result < /dev/tty
+
+        if [ -n "$result" ]; then
+            echo "$result"
+            return
+        fi
+
+        print_warn "此字段为必填项，请输入有效值。"
+    done
 }
 
 ask_choice() {
@@ -1006,18 +1032,65 @@ interactive_config() {
 
     print_section "部署类型"
 
-    DEPLOY_CHOICE=$(ask_choice "部署类型" "1" \
-        "私有 / 本地 ⭐ 推荐（localhost/IP，无 SSL）" \
-        "公开 / 生产环境（带域名，可选 SSL）")
+    echo "谁将会访问这个 Dify 实例？"
+    echo ""
+    echo "  [1] 仅本机（localhost）- 用于本地开发/测试"
+    echo "      → 访问地址：http://localhost 或 http://127.0.0.1"
+    echo ""
+    echo "  [2] 局域网内其他设备 / 云服务器（使用 IP 或域名）"
+    echo "      → 访问地址：http://你的IP:端口 或 http://你的域名:端口"
+    echo "      → 示例：http://192.168.1.100:8080 或 http://dify.example.com:8080"
+    echo "      → 只需开放一个端口（所有服务共享此端口）"
+    echo ""
+    echo "  [3] 公网生产环境（使用 SSL/HTTPS）"
+    echo "      → 访问地址：https://你的域名.com（标准端口 80/443）"
+    echo ""
 
-    if [ "$DEPLOY_CHOICE" = "2" ]; then
+    DEPLOY_CHOICE=$(ask_choice "选择部署类型" "2" \
+        "仅本地开发（localhost）" \
+        "网络/IP/域名访问（HTTP，单端口）" \
+        "公网生产环境（HTTPS 带 SSL）")
+
+    if [ "$DEPLOY_CHOICE" = "1" ]; then
+        # 仅本地开发
+        DEPLOY_TYPE="private"
+        print_section "网络配置"
+        echo "本地开发模式 - Dify 只能从本机访问。"
+        echo ""
+
+        DOMAIN="localhost"
+        HTTP_PORT=$(ask "HTTP 端口" "80")
+        NGINX_SERVER_NAME="$DOMAIN"
+        NGINX_HTTPS_ENABLED=false
+
+        print_ok "已配置本地访问地址：http://localhost:$HTTP_PORT"
+
+    elif [ "$DEPLOY_CHOICE" = "2" ]; then
+        # 网络/IP/域名访问，单端口
+        DEPLOY_TYPE="private"
+        print_section "网络配置"
+        echo "网络访问模式 - Dify 可通过 IP 或域名访问，只需一个端口。"
+        echo ""
+        echo "💡 提示：只需在防火墙/安全组中开放一个端口。"
+        echo "   所有服务（API、Web、文件）通过 Nginx 共享这一个端口。"
+        echo ""
+
+        DOMAIN=$(ask_required "IP 地址或域名" "192.168.1.100 或 dify.example.com")
+
+        HTTP_PORT=$(ask "要开放的 HTTP 端口" "8080")
+        NGINX_SERVER_NAME="$DOMAIN"
+        NGINX_HTTPS_ENABLED=false
+
+        echo ""
+        print_ok "已配置网络访问地址：http://$DOMAIN:$HTTP_PORT"
+        echo "   请确保在防火墙/安全组中开放端口 $HTTP_PORT。"
+
+    else
+        # 公网生产环境，带 SSL
         DEPLOY_TYPE="public"
         print_section "域名和网络"
 
-        DOMAIN=$(ask "域名（例如：dify.example.com）" "")
-        while [ -z "$DOMAIN" ]; do
-            DOMAIN=$(ask "域名（公开部署必填）" "")
-        done
+        DOMAIN=$(ask_required "域名" "dify.example.com")
         NGINX_SERVER_NAME="$DOMAIN"
 
         HTTP_PORT=$(ask "HTTP 端口" "80")
@@ -1026,9 +1099,9 @@ interactive_config() {
         print_section "SSL 证书"
 
         SSL_CHOICE=$(ask_choice "SSL 证书选项" "1" \
-            "无 SSL（仅使用 HTTP）⭐ 推荐用于测试" \
-            "启用 SSL（使用 Let's Encrypt / Certbot）" \
-            "启用 SSL（自定义证书）")
+            "无 SSL（仅使用 HTTP）- 不推荐用于生产环境" \
+            "启用 SSL 并使用 Let's Encrypt（自动管理）" \
+            "启用 SSL 并使用自定义证书")
 
         case $SSL_CHOICE in
             1)
@@ -1047,14 +1120,6 @@ interactive_config() {
                 echo "  - 私钥：./nginx/ssl/dify.key"
                 ;;
         esac
-    else
-        DEPLOY_TYPE="private"
-        print_section "网络配置"
-
-        DOMAIN=$(ask "IP 地址或主机名" "localhost")
-        HTTP_PORT=$(ask "HTTP 端口" "80")
-        NGINX_SERVER_NAME="$DOMAIN"
-        NGINX_HTTPS_ENABLED=false
     fi
 
     print_section "数据库选择"
@@ -1205,7 +1270,9 @@ create_env_file() {
     update_env "CONSOLE_API_URL" "$base_url" ".env"
     update_env "CONSOLE_WEB_URL" "$base_url" ".env"
     update_env "SERVICE_API_URL" "$base_url" ".env"
+    update_env "APP_API_URL" "$base_url" ".env"
     update_env "APP_WEB_URL" "$base_url" ".env"
+    update_env "TRIGGER_URL" "$base_url" ".env"
     update_env "FILES_URL" "$files_url" ".env"
     update_env "INTERNAL_FILES_URL" "http://api:5001" ".env"
 
@@ -1286,17 +1353,12 @@ check_service_health() {
 
 # 检查 API 是否响应
 check_api_health() {
-    local max_attempts=30
+    local max_attempts=60
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
-        # 尝试连接 API 健康检查端点
-        if curl -sf "http://localhost:${HTTP_PORT}/health" >/dev/null 2>&1; then
-            return 0
-        fi
-
-        # 如果 nginx 未就绪，也尝试直接连接 API 端口
-        if curl -sf "http://localhost:5001/health" >/dev/null 2>&1; then
+        # 直接在容器内部检查API健康状态，不依赖nginx或端口映射
+        if docker compose exec -T api curl -sf http://localhost:5001/health >/dev/null 2>&1; then
             return 0
         fi
 
@@ -1395,8 +1457,12 @@ start_services() {
         print_ok "API 健康且响应正常"
     else
         print_warn "API 健康检查超时"
-        echo "  服务可能仍在初始化中。使用以下命令查看日志：docker compose logs -f api"
-        echo "  如果问题持续，请检查 .env 文件中的配置"
+        echo "  显示最近100行API日志帮助排查问题："
+        echo "================================================================"
+        docker compose logs --tail 100 api
+        echo "================================================================"
+        echo "  服务可能仍在初始化中。使用以下命令查看完整日志：docker compose logs -f api"
+        echo "  常见问题：数据库连接失败、配置缺失、内存不足"
     fi
     echo ""
 }
