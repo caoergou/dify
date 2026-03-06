@@ -11,7 +11,7 @@ For most users, we recommend using the one-click installer for the easiest deplo
 **No need to clone anything!** Just run this single command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash
 ```
 
 The installer will:
@@ -26,7 +26,7 @@ The installer will:
 
 **Quick mode** (skip questions, use all defaults):
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash -s -- --yes
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash -s -- --yes
 ```
 
 #### Chinese Users (中国大陆用户)
@@ -34,7 +34,7 @@ curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.
 For users in China, we provide a localized installer with GitHub mirror support and Docker registry acceleration:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install-cn.sh | bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install-cn.sh | bash
 ```
 
 Features for Chinese users:
@@ -45,7 +45,7 @@ Features for Chinese users:
 
 **Quick mode**:
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install-cn.sh | bash -s -- --yes
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install-cn.sh | bash -s -- --yes
 ```
 
 #### With Repository (Optional)

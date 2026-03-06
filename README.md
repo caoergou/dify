@@ -74,7 +74,7 @@ The easiest way to start the Dify server is through our one-click installer. Bef
 **No need to clone the repository first!** Simply run this one command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash
 ```
 
 The installer will automatically:
@@ -93,7 +93,7 @@ The installer will guide you through configuration options including:
 
 **Quick mode** (use all defaults, no questions):
 ```bash
-curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash -s -- --yes
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash -s -- --yes
 ```
 
 ### Option 2: With Repository (Optional)

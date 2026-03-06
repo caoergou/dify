@@ -6,7 +6,7 @@ set -euo pipefail
 #   ./install.sh                    # Interactive configuration (recommended)
 #   ./install.sh --yes              # Use all recommended defaults (no interaction)
 #   ./install.sh --help             # Show help
-#   curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash
 #
 # Features:
 #   - Curl one-liner installation
@@ -36,8 +36,8 @@ OPENDAL_SCHEME="fs"
 CONFIGURE_EMAIL=false
 
 # GitHub repository configuration
-GITHUB_REPO="langgenius/dify"
-GITHUB_BRANCH="main"
+GITHUB_REPO="caoergou/dify"
+GITHUB_BRANCH="add-one-click-install-sh"
 
 # ============================================
 # Early help check - do this before anything else
@@ -46,7 +46,7 @@ show_help() {
     echo "Dify One-Click Installer"
     echo ""
     echo "Usage:"
-    echo "  curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash"
+    echo "  curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash"
     echo "                                      # Interactive mode (recommended)"
     echo ""
     echo "  ./install.sh                    # Interactive configuration (if already have files)"
@@ -55,8 +55,8 @@ show_help() {
     echo "  ./install.sh --help             # Show this help"
     echo ""
     echo "Curl one-liner examples:"
-    echo "  curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash"
-    echo "  curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash -s -- --yes"
+    echo "  curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash"
+    echo "  curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash -s -- --yes"
     echo ""
     echo "What it does:"
     echo "  - Shallow clones Dify repository if needed"
