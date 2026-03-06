@@ -337,7 +337,7 @@ ask() {
     local prompt="$1"
     local default="$2"
     local result
-    read -p "$prompt [$default] " result
+    read -p "$prompt [$default] " result < /dev/tty
     echo "${result:-$default}"
 }
 
@@ -353,7 +353,7 @@ ask_choice() {
     done
 
     local result
-    read -p "Your choice: [$default] " result
+    read -p "Your choice: [$default] " result < /dev/tty
     result="${result:-$default}"
 
     if ! [[ "$result" =~ ^[0-9]+$ ]] || [ "$result" -lt 1 ] || [ "$result" -gt "${#options[@]}" ]; then
@@ -369,7 +369,7 @@ ask_yes_no() {
     local default_display="$([ "$default" = true ] && echo "Y/n" || echo "y/N")"
 
     local result
-    read -p "$prompt [$default_display] " result
+    read -p "$prompt [$default_display] " result < /dev/tty
     result="${result:-$([ "$default" = true ] && echo "y" || echo "n")}"
 
     case "$result" in
@@ -490,7 +490,7 @@ check_and_handle_port() {
     if [ "$INTERACTIVE" = true ]; then
         echo ""
         local choice
-        read -p "Enter a different port for $port_name, or press Enter to continue anyway: " choice
+        read -p "Enter a different port for $port_name, or press Enter to continue anyway: " choice < /dev/tty
         if [ -n "$choice" ] && [[ "$choice" =~ ^[0-9]+$ ]]; then
             eval "${port_name}_PORT=$choice"
             print_ok "Will use port $choice for $port_name"
@@ -501,27 +501,6 @@ check_and_handle_port() {
         print_warn "Continuing with port conflict. Services may fail to start."
     fi
     return 1
-}
-
-check_ports() {
-    local has_conflict=false
-
-    if ! check_and_handle_port "$HTTP_PORT" "HTTP"; then
-        has_conflict=true
-    fi
-
-    if [ "$NGINX_HTTPS_ENABLED" = true ]; then
-        if ! check_and_handle_port "$HTTPS_PORT" "HTTPS"; then
-            has_conflict=true
-        fi
-    fi
-
-    if [ "$has_conflict" = true ]; then
-        echo ""
-        print_warn "One or more ports are in conflict. Dify may not start correctly."
-        echo "    After installation, you can modify ports in .env and restart:"
-        echo "    docker compose down && docker compose up -d"
-    fi
 }
 
 # Prerequisite checks
@@ -604,11 +583,23 @@ check_disk_space() {
 }
 
 check_ports() {
-    if ! check_port "$HTTP_PORT"; then
-        print_warn "Port $HTTP_PORT is already in use"
+    local has_conflict=false
+
+    if ! check_and_handle_port "$HTTP_PORT" "HTTP"; then
+        has_conflict=true
     fi
-    if [ "$NGINX_HTTPS_ENABLED" = true ] && ! check_port "$HTTPS_PORT"; then
-        print_warn "Port $HTTPS_PORT is already in use"
+
+    if [ "$NGINX_HTTPS_ENABLED" = true ]; then
+        if ! check_and_handle_port "$HTTPS_PORT" "HTTPS"; then
+            has_conflict=true
+        fi
+    fi
+
+    if [ "$has_conflict" = true ]; then
+        echo ""
+        print_warn "One or more ports are in conflict. Dify may not start correctly."
+        echo "    After installation, you can modify ports in .env and restart:"
+        echo "    docker compose down && docker compose up -d"
     fi
 }
 
@@ -830,7 +821,7 @@ interactive_config() {
     echo "All secrets will be auto-generated, secure and unique."
     echo ""
 
-    read -p "Press Enter to start installation, or Ctrl+C to cancel. "
+    read -p "Press Enter to start installation, or Ctrl+C to cancel. " < /dev/tty
     echo ""
 }
 
@@ -1114,7 +1105,7 @@ main() {
         echo "Using all recommended defaults (no interactive mode)"
         echo ""
         if [ "$YES_MODE" = false ]; then
-            read -p "Continue with installation? [y/N] " -n 1 -r
+            read -p "Continue with installation? [y/N] " -n 1 -r < /dev/tty
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 echo "Installation cancelled."

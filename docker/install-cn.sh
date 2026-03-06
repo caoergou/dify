@@ -264,7 +264,7 @@ configure_docker_mirror() {
         echo ""
 
         local configure_mirror
-        read -p "是否配置 Docker 镜像加速器？ [Y/n] " configure_mirror
+        read -p "是否配置 Docker 镜像加速器？ [Y/n] " configure_mirror < /dev/tty
         configure_mirror="${configure_mirror:-y}"
 
         case "$configure_mirror" in
@@ -627,7 +627,7 @@ ask() {
     local prompt="$1"
     local default="$2"
     local result
-    read -p "$prompt [$default] " result
+    read -p "$prompt [$default] " result < /dev/tty
     echo "${result:-$default}"
 }
 
@@ -643,7 +643,7 @@ ask_choice() {
     done
 
     local result
-    read -p "请选择：[$default] " result
+    read -p "请选择：[$default] " result < /dev/tty
     result="${result:-$default}"
 
     if ! [[ "$result" =~ ^[0-9]+$ ]] || [ "$result" -lt 1 ] || [ "$result" -gt "${#options[@]}" ]; then
@@ -659,7 +659,7 @@ ask_yes_no() {
     local default_display="$([ "$default" = true ] && echo "Y/n" || echo "y/N")"
 
     local result
-    read -p "$prompt [$default_display] " result
+    read -p "$prompt [$default_display] " result < /dev/tty
     result="${result:-$([ "$default" = true ] && echo "y" || echo "n")}"
 
     case "$result" in
@@ -780,7 +780,7 @@ check_and_handle_port() {
     if [ "$INTERACTIVE" = true ]; then
         echo ""
         local choice
-        read -p "请输入新的 $port_name 端口号，或按回车继续使用当前端口: " choice
+        read -p "请输入新的 $port_name 端口号，或按回车继续使用当前端口: " choice < /dev/tty
         if [ -n "$choice" ] && [[ "$choice" =~ ^[0-9]+$ ]]; then
             eval "${port_name}_PORT=$choice"
             print_ok "将使用端口 $choice 作为 $port_name"
@@ -1117,7 +1117,7 @@ interactive_config() {
     echo "所有密钥将自动生成，安全且唯一。"
     echo ""
 
-    read -p "按回车键开始安装，或按 Ctrl+C 取消。 "
+    read -p "按回车键开始安装，或按 Ctrl+C 取消。 " < /dev/tty
     echo ""
 }
 
@@ -1404,7 +1404,7 @@ main() {
         echo "使用所有推荐默认值（非交互模式）"
         echo ""
         if [ "$YES_MODE" = false ]; then
-            read -p "继续安装？[y/N] " -n 1 -r
+            read -p "继续安装？[y/N] " -n 1 -r < /dev/tty
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 echo "安装已取消。"
