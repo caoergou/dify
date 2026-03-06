@@ -440,6 +440,19 @@ generate_password() {
     exit 1
 }
 
+# Get process using a port
+get_port_process() {
+    local port=$1
+    if command -v lsof &> /dev/null; then
+        lsof -i :"$port" -t 2>/dev/null | head -1 | xargs ps -p 2>/dev/null | tail -1 || echo ""
+    elif command -v ss &> /dev/null; then
+        local pid=$(ss -tulnp 2>/dev/null | grep ":$port " | grep -oP 'pid=\K[0-9]+' | head -1)
+        if [ -n "$pid" ]; then
+            ps -p "$pid" -o comm= 2>/dev/null || echo "PID $pid"
+        fi
+    fi
+}
+
 # Check if a port is in use
 check_port() {
     local port=$1
@@ -459,6 +472,58 @@ check_port() {
     return 0
 }
 
+# Check and handle port conflicts
+check_and_handle_port() {
+    local port=$1
+    local port_name=$2
+
+    if check_port "$port"; then
+        return 0  # Port is available
+    fi
+
+    local process=$(get_port_process "$port")
+    print_warn "Port $port ($port_name) is already in use"
+    if [ -n "$process" ]; then
+        echo "    Process: $process"
+    fi
+
+    if [ "$INTERACTIVE" = true ]; then
+        echo ""
+        local choice
+        read -p "Enter a different port for $port_name, or press Enter to continue anyway: " choice
+        if [ -n "$choice" ] && [[ "$choice" =~ ^[0-9]+$ ]]; then
+            eval "${port_name}_PORT=$choice"
+            print_ok "Will use port $choice for $port_name"
+            return 0
+        fi
+        print_warn "Continuing with port conflict. Services may fail to start."
+    else
+        print_warn "Continuing with port conflict. Services may fail to start."
+    fi
+    return 1
+}
+
+check_ports() {
+    local has_conflict=false
+
+    if ! check_and_handle_port "$HTTP_PORT" "HTTP"; then
+        has_conflict=true
+    fi
+
+    if [ "$NGINX_HTTPS_ENABLED" = true ]; then
+        if ! check_and_handle_port "$HTTPS_PORT" "HTTPS"; then
+            has_conflict=true
+        fi
+    fi
+
+    if [ "$has_conflict" = true ]; then
+        echo ""
+        print_warn "One or more ports are in conflict. Dify may not start correctly."
+        echo "    After installation, you can modify ports in .env and restart:"
+        echo "    docker compose down && docker compose up -d"
+    fi
+}
+
 # Prerequisite checks
 check_docker() {
     if ! command -v docker &> /dev/null; then
@@ -468,6 +533,16 @@ check_docker() {
     fi
     local docker_version=$(docker --version | awk '{print $3}' | sed 's/,//')
     print_ok "Docker is installed (v$docker_version)"
+
+    # Check if Docker daemon is running
+    if ! docker info &>/dev/null; then
+        print_error "Docker daemon is not running"
+        echo "Please start Docker service:"
+        echo "  sudo systemctl start docker   # Linux"
+        echo "  open -a Docker                # macOS"
+        exit 1
+    fi
+    print_ok "Docker daemon is running"
 }
 
 check_docker_compose() {
@@ -495,21 +570,36 @@ check_system_resources() {
         print_ok "CPU: $cpu_cores cores (minimum 2 required)"
     fi
 
-    local total_ram
+    local total_ram_mb
     if [[ "$(uname)" == "Darwin" ]]; then
-        total_ram=$(sysctl -n hw.memsize | awk '{print int($1/1024/1024/1024)}')
+        total_ram_mb=$(($(sysctl -n hw.memsize) / 1024 / 1024))
     else
-        total_ram=$(free -g 2>/dev/null | awk '/Mem:/ {print $2}' || echo 0)
-        if [ "$total_ram" -eq 0 ]; then
-            total_ram=$(awk '/MemTotal/ {print int($2/1024/1024)}' /proc/meminfo 2>/dev/null || echo 4)
-        fi
+        total_ram_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 4096)
     fi
 
-    if [ "$total_ram" -lt 4 ]; then
-        print_warn "Only ${total_ram}GB RAM detected. Dify requires at least 4GB."
+    local total_ram_gb=$((total_ram_mb / 1024))
+    if [ "$total_ram_mb" -lt 4000 ]; then
+        print_warn "Only ${total_ram_gb}GB RAM detected. Dify requires at least 4GB."
         echo "    Consider using Dify Cloud for better performance: https://cloud.dify.ai"
     else
-        print_ok "RAM: ${total_ram}GB (minimum 4 required)"
+        print_ok "RAM: ${total_ram_gb}GB (minimum 4 required)"
+    fi
+}
+
+check_disk_space() {
+    local available_mb
+    if [[ "$(uname)" == "Darwin" ]]; then
+        available_mb=$(df -m . | awk 'NR==2 {print $4}')
+    else
+        available_mb=$(df -m . | awk 'NR==2 {print $4}')
+    fi
+
+    local available_gb=$((available_mb / 1024))
+    if [ "$available_mb" -lt 20000 ]; then
+        print_warn "Only ${available_gb}GB disk space available. Recommend at least 20GB for Dify."
+        echo "    This may cause issues when pulling Docker images."
+    else
+        print_ok "Disk: ${available_gb}GB available (minimum 20GB recommended)"
     fi
 }
 
@@ -527,6 +617,7 @@ check_prerequisites() {
     check_docker
     check_docker_compose
     check_system_resources
+    check_disk_space
     echo ""
 }
 
@@ -799,10 +890,10 @@ create_env_file() {
         base_url="${base_url}:${HTTPS_PORT}"
     fi
 
-    # Build FILES_URL correctly - use just the domain without external port
-    local files_protocol="$protocol"
-    local files_host="$DOMAIN"
-    local files_url="${files_protocol}://${files_host}:5001"
+    # Build URLs - FILES_URL uses the same base URL as other services
+    # Note: FILES_URL should point to the same origin as the web interface
+    # Internal file access is handled separately via INTERNAL_FILES_URL
+    local files_url="$base_url"
 
     update_env "SECRET_KEY" "$SECRET_KEY" ".env"
     update_env "DB_PASSWORD" "$DB_PASSWORD" ".env"
@@ -893,30 +984,87 @@ check_service_health() {
     return 1
 }
 
+# Check if API is responding
+check_api_health() {
+    local max_attempts=30
+    local attempt=0
+
+    while [ $attempt -lt $max_attempts ]; do
+        # Try to connect to the API health endpoint
+        if curl -sf "http://localhost:${HTTP_PORT}/health" >/dev/null 2>&1; then
+            return 0
+        fi
+
+        # Also try direct API port if nginx isn't ready
+        if curl -sf "http://localhost:5001/health" >/dev/null 2>&1; then
+            return 0
+        fi
+
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+
+    return 1
+}
+
 # Start services with proper error handling and health checks
 start_services() {
     echo "Starting Dify..."
-    print_step "Pulling images (this may take a few minutes)"
-    if ! docker compose pull; then
-        print_error "Failed to pull images"
-        echo "Check the error above and try again."
+    print_step "Pulling images (this may take a few minutes)..."
+
+    local pull_max_retries=3
+    local pull_retry=0
+    local pull_success=false
+
+    while [ $pull_retry -lt $pull_max_retries ]; do
+        if docker compose pull 2>&1; then
+            pull_success=true
+            break
+        fi
+
+        pull_retry=$((pull_retry + 1))
+        if [ $pull_retry -lt $pull_max_retries ]; then
+            print_warn "Pull failed, retrying ($pull_retry/$pull_max_retries)..."
+            sleep 5
+        fi
+    done
+
+    if [ "$pull_success" = false ]; then
+        print_error "Failed to pull images after $pull_max_retries attempts"
+        echo ""
+        echo "Possible causes:"
+        echo "  - Network connectivity issues"
+        echo "  - Docker Hub rate limiting"
+        echo "  - Insufficient disk space"
+        echo ""
+        echo "Solutions:"
+        echo "  - Check your network connection"
+        echo "  - Wait a few minutes and try again"
+        echo "  - Configure a Docker mirror for faster pulls"
         echo ""
         echo "If self-hosting is too complex, try Dify Cloud:"
         echo "  https://cloud.dify.ai"
         exit 1
     fi
-    print_ok "Pulling images"
+    print_ok "Images pulled successfully"
 
-    print_step "Starting containers"
+    print_step "Starting containers..."
     if ! docker compose up -d; then
         print_error "Failed to start containers"
-        echo "Check the error above and try again."
+        echo ""
+        echo "Check the logs for details:"
+        echo "  docker compose logs"
+        echo ""
+        echo "Common issues:"
+        echo "  - Port conflicts (check if ports 80/443 are in use)"
+        echo "  - Insufficient memory (need at least 4GB)"
+        echo "  - Permission issues (ensure Docker has access)"
         echo ""
         echo "If self-hosting is too complex, try Dify Cloud:"
         echo "  https://cloud.dify.ai"
         exit 1
     fi
-    print_ok "Starting containers"
+    print_ok "Containers started"
 
     print_step "Waiting for services to be healthy..."
     local max_wait=180
@@ -935,12 +1083,20 @@ start_services() {
     echo ""
 
     if [ "$healthy" = true ]; then
-        print_ok "Services are starting up"
+        print_ok "All containers are running"
     else
-        print_warn "Services may still be starting. Check status with: docker compose ps"
-        echo ""
-        echo "If issues persist, consider Dify Cloud for a managed experience:"
-        echo "  https://cloud.dify.ai"
+        print_warn "Some containers may still be starting"
+        echo "  Check status with: docker compose ps"
+    fi
+
+    # Additional API health check
+    print_step "Verifying API is responding..."
+    if check_api_health; then
+        print_ok "API is healthy and responding"
+    else
+        print_warn "API health check timed out"
+        echo "  Services may still be initializing. Check logs with: docker compose logs -f api"
+        echo "  If issues persist, verify your configuration in .env file"
     fi
     echo ""
 }

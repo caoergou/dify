@@ -29,6 +29,25 @@ The installer will:
 curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install.sh | bash -s -- --yes
 ```
 
+#### Chinese Users (中国大陆用户)
+
+For users in China, we provide a localized installer with GitHub mirror support and Docker registry acceleration:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install-cn.sh | bash
+```
+
+Features for Chinese users:
+- **GitHub Mirror Support**: Auto-detects and uses the best available mirror (ghproxy, gitclone, fastgit, etc.)
+- **Docker Registry Acceleration**: Prompts to configure China-based Docker mirror (Aliyun, NetEase, USTC, Tencent)
+- **Chinese Prompts**: All interactions and error messages are in Chinese
+- **Retry Mechanism**: Automatic retry with mirror switching on network failures
+
+**Quick mode**:
+```bash
+curl -sSL https://raw.githubusercontent.com/langgenius/dify/main/docker/install-cn.sh | bash -s -- --yes
+```
+
 #### With Repository (Optional)
 
 If you prefer to have the repository locally:
