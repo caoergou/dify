@@ -211,15 +211,25 @@ setup_working_directory() {
             print_error "Directory $clone_dir is not owned by you or root. Aborting for security."
             exit 1
         fi
-        cd "$clone_dir"
-        print_step "Updating Dify repository..."
-        if git pull origin "$GITHUB_BRANCH" 2>/dev/null; then
-            print_ok "Updated Dify repository"
+
+        # Check if it's a complete repository (has docker subdirectory)
+        if [ ! -d "$clone_dir/docker" ] || [ ! -f "$clone_dir/docker/.env.example" ]; then
+            print_warn "Incomplete Dify directory detected, re-cloning..."
+            rm -rf "$clone_dir"
         else
-            print_warn "Could not update, using existing version"
+            cd "$clone_dir"
+            print_step "Updating Dify repository..."
+            if git pull origin "$GITHUB_BRANCH" 2>/dev/null; then
+                print_ok "Updated Dify repository"
+            else
+                print_warn "Could not update, using existing version"
+            fi
+            cd ..
         fi
-        cd ..
-    else
+    fi
+
+    # If directory doesn't exist or was removed, clone it
+    if [ ! -d "$clone_dir" ]; then
         print_header
         echo "Cloning Dify repository (shallow, this will be quick)..."
         echo ""

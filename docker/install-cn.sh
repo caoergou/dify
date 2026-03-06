@@ -440,16 +440,25 @@ setup_working_directory() {
             print_error "目录 $clone_dir 不属于您或 root。出于安全考虑，中止操作。"
             exit 1
         fi
-        cd "$clone_dir"
-        print_step "更新 Dify 仓库..."
-        if git pull origin "$GITHUB_BRANCH" 2>/dev/null; then
-            print_ok "Dify 仓库已更新"
+
+        # 检查是否是完整的仓库（包含 docker 子目录）
+        if [ ! -d "$clone_dir/docker" ] || [ ! -f "$clone_dir/docker/.env.example" ]; then
+            print_warn "检测到不完整的 Dify 目录，正在重新克隆..."
+            rm -rf "$clone_dir"
         else
-            print_warn "无法更新，使用现有版本"
+            cd "$clone_dir"
+            print_step "更新 Dify 仓库..."
+            if git pull origin "$GITHUB_BRANCH" 2>/dev/null; then
+                print_ok "Dify 仓库已更新"
+            else
+                print_warn "无法更新，使用现有版本"
+            fi
+            cd ..
         fi
-        cd ..
-    else
-        print_header
+    fi
+
+    # 如果目录不存在或已被删除，执行克隆
+    if [ ! -d "$clone_dir" ]; then
 
         # 检查 git 是否安装
         if ! command -v git &> /dev/null; then
