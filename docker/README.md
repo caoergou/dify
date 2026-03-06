@@ -2,6 +2,72 @@
 
 Welcome to the new `docker` directory for deploying Dify using Docker Compose. This README outlines the updates, deployment instructions, and migration details for existing users.
 
+### Quick Start with One-Click Installer
+
+For most users, we recommend using the one-click installer for the easiest deployment experience.
+
+#### One Command to Rule Them All (Recommended)
+
+**No need to clone anything!** Just run this single command:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash
+```
+
+The installer will:
+- Automatically create a `dify/docker` directory
+- Download all required files (`.env.example`, `docker-compose.yaml`, etc.)
+- Check system prerequisites (Docker, Docker Compose, CPU, RAM)
+- Guide you through configuration with smart defaults
+- Automatically generate secure secrets and passwords
+- Create a customized `.env` file
+- Start all services
+- Show you how to access Dify
+
+**Quick mode** (skip questions, use all defaults):
+```bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install.sh | bash -s -- --yes
+```
+
+#### Chinese Users (中国大陆用户)
+
+For users in China, we provide a localized installer with GitHub mirror support and Docker registry acceleration:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install-cn.sh | bash
+```
+
+Features for Chinese users:
+- **GitHub Mirror Support**: Auto-detects and uses the best available mirror (ghproxy, gitclone, fastgit, etc.)
+- **Docker Registry Acceleration**: Prompts to configure China-based Docker mirror (Aliyun, NetEase, USTC, Tencent)
+- **Chinese Prompts**: All interactions and error messages are in Chinese
+- **Retry Mechanism**: Automatic retry with mirror switching on network failures
+
+**Quick mode**:
+```bash
+curl -sSL https://raw.githubusercontent.com/caoergou/dify/add-one-click-install-sh/docker/install-cn.sh | bash -s -- --yes
+```
+
+#### With Repository (Optional)
+
+If you prefer to have the repository locally:
+
+```bash
+# Shallow clone (fast, only latest commit)
+git clone --depth 1 https://github.com/langgenius/dify.git
+cd dify/docker
+
+# Interactive mode (recommended)
+./install.sh
+
+# Quick mode
+./install.sh --yes
+```
+
+Run `./install.sh --help` for more options.
+
+---
+
 ### What's Updated
 
 - **Certbot Container**: `docker-compose.yaml` now contains `certbot` for managing SSL certificates. This container automatically renews certificates and ensures secure HTTPS connections.\
